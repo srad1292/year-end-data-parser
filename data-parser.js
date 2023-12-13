@@ -82,8 +82,39 @@ function organizeData(data) {
 
     let recordDate;
     
+    let didHourCount = 0;
+    let didNotDoHourCount = 0;
+    let unexpectedHourValueCount = 0;
+    let didMoreThanHourCount = 0;
+
+    let totalTime = 0;
+    let longestDailyTime = 0;
+    let longestMonthlyTime = 0;
+
+    let dailyTime = 0;
+    let monthlyTime = 0;
+
     data.forEach(record => {
         if(record.weight !== null) { weights.push({date: record.date, weight: record.weight}); }
+
+        if(record.usedWorkHour === null || record.usedWorkHour === undefined) {
+            unexpectedHourValueCount++;
+            return;
+        } else if(record.usedWorkHour.toLowerCase() === 'yes') {
+            didHourCount++;
+        } else {
+            didNotDoHourCount++;
+        }
+
+        if(record.continuedAfter !== null && record.continuedAfter !== undefined && record.continuedAfter.toLowerCase() === 'yes') {
+            didMoreThanHourCount++;
+        }
+
+        dailyTime = parseInt(record.projectPlanning) + parseInt(record.gameDev) + parseInt(record.generalProgramming) + parseInt(record.vfx) + parseInt(record.sfx) + parseInt(record.writing) + parseInt(record.researchAndStudying);
+        if(dailyTime > longestDailyTime) {
+            longestDailyTime = dailyTime;
+        }
+        totalTime += dailyTime;
 
         recordDate = new Date(record.date);
         if(recordDate.getMonth() === prevMonth) {
@@ -95,6 +126,10 @@ function organizeData(data) {
             writing[prevMonth] += parseInt(record.writing);
             researchAndStudying[prevMonth] += parseInt(record.researchAndStudying);
         } else {
+            if(monthlyTime > longestMonthlyTime) {
+                longestMonthlyTime = monthlyTime;
+            }
+            monthlyTime = 0;
             prevMonth = recordDate.getMonth();
             projectPlanning.push(parseInt(record.projectPlanning));
             gameDev.push(parseInt(record.gameDev));
@@ -105,6 +140,8 @@ function organizeData(data) {
             researchAndStudying.push(parseInt(record.researchAndStudying));
             happiness.push({one: 0, two: 0, three: 0, four: 0, five:0});
         }
+
+        monthlyTime += dailyTime;
 
         happyValue = parseInt(record.happiness);
         if(happyValue === 1) {
@@ -118,11 +155,24 @@ function organizeData(data) {
         } else if(happyValue === 5) {
             happiness[prevMonth].five += 1;
         }
-
-
     });
 
+    if(monthlyTime > longestMonthlyTime) {
+        longestMonthlyTime = monthlyTime;
+    }
+
+    let percentMoreThanHour = (didMoreThanHourCount / (didHourCount+didNotDoHourCount) * 100).toFixed(2);
+    let averageDailyTime = (totalTime / (didHourCount+didNotDoHourCount)).toFixed(2);
     let organized = {
+        unexpectedHourValueCount,
+        didHourCount,
+        didNotDoHourCount,
+        didMoreThanHourCount,
+        percentMoreThanHour,
+        longestDailyTime,
+        longestMonthlyTime,
+        totalTime,
+        averageDailyTime,
         weights,
         timeSpent: {
             projectPlanning,
@@ -133,10 +183,23 @@ function organizeData(data) {
             writing,
             researchAndStudying,  
         },
+        categoryTotals: {
+            projectPlanning: sum(projectPlanning),
+            gameDev: sum(gameDev),
+            generalProgramming: sum(generalProgramming),
+            vfx: sum(vfx),
+            sfx: sum(sfx),
+            writing: sum(writing),
+            researchAndStudying: sum(researchAndStudying),
+        },
         happiness
     }
 
     writeOrganizedToFile(organized);
+}
+
+function sum(arr) {
+    return arr.reduce((accum, curr) => accum + curr, 0);
 }
 
 async function writeOrganizedToFile(organized) {
