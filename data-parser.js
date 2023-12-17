@@ -163,6 +163,8 @@ function organizeData(data) {
 
     let percentMoreThanHour = (didMoreThanHourCount / (didHourCount+didNotDoHourCount) * 100).toFixed(2);
     let averageDailyTime = (totalTime / (didHourCount+didNotDoHourCount)).toFixed(2);
+    let averageMonthlyTime = (totalTime / 12).toFixed(2);
+
     let organized = {
         unexpectedHourValueCount,
         didHourCount,
@@ -173,6 +175,7 @@ function organizeData(data) {
         longestMonthlyTime,
         totalTime,
         averageDailyTime,
+        averageMonthlyTime,
         weights,
         timeSpent: {
             projectPlanning,

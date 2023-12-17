@@ -8,6 +8,7 @@
     "longestMonthlyTime": 3238,
     "totalTime": 29982,
     "averageDailyTime": "87.16",
+    "averageMonthlyTime": "2498.50",
     "weights": [
         {
             "date": "1/1/23",
